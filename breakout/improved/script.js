@@ -5,19 +5,32 @@
     var defaults = {
         dx: 2,
         dy: -2,
-        ballRadius: 10,
+        framesPerSecond: 60,
         paddleHeight: 10,
-        paddleWidth: 75,
-        brickRowCount: 3,
-        brickColumnCount: 5,
-        brickWidth: 75,
+        brickRowCount: 6,
+        brickColumnCount: 10,
         brickHeight: 20,
-        brickPadding: 10,
+        brickPadding: 2,
         brickOffsetTop: 30,
-        brickOffsetLeft: 30,
+        brickOffsetLeft: 2,
         paddleMovement: 7,
-        scoreLivesColor: '#FFC107'
+        scoreLivesColor: '#FFC107',
+        ballColor: '#2196F3',
+        paddleColor: '#FF5722',
+        brickColorArray: [
+            '#F44336',
+            '#9C27B0',
+            '#3F51B5',
+            '#03A9F4',
+            '#009688',
+            '#8BC34A',
+            '#FFEB3B'
+        ]
     };
+
+    defaults.brickWidth = (canvas.width - (defaults.brickOffsetLeft*2) - (defaults.brickColumnCount * defaults.brickPadding))/defaults.brickColumnCount;
+    defaults.paddleWidth = canvas.width / 6.4;
+    defaults.ballRadius = canvas.width / 68.5;
 
     var state = {
         score: 0,
@@ -74,8 +87,15 @@
             for (var r = 0; r < defaults.brickRowCount; r++) {
                 var b = bricks[c][r];
                 if (b.show) {
-                    if (x > b.x && x < b.x+defaults.brickWidth && y > b.y && y < b.y+defaults.brickHeight) {
-                        defaults.dy = -defaults.dy;
+                    if ((x + defaults.ballRadius) > b.x
+                        && x - defaults.ballRadius < b.x+defaults.brickWidth
+                        && y > (b.y - defaults.ballRadius)
+                        && y < b.y+defaults.brickHeight+defaults.ballRadius) {
+                        if (y < b.y + defaults.brickHeight + 2) { // if collision occurs on side of brick
+                            defaults.dx = -defaults.dx;
+                        } else { // collision occurred on top or bottom
+                            defaults.dy = -defaults.dy;
+                        }
                         b.show = false;
                         state.score += 100;
                         if (state.score === defaults.brickRowCount*defaults.brickColumnCount*100) {
@@ -91,7 +111,7 @@
     function drawBall() {
         ctx.beginPath();
         ctx.arc(x, y, defaults.ballRadius, 0, Math.PI*2);
-        ctx.fillStyle = '#2196F3';
+        ctx.fillStyle = defaults.ballColor;
         ctx.fill();
         ctx.closePath();
     }
@@ -99,7 +119,7 @@
     function drawPaddle() {
         ctx.beginPath();
         ctx.rect(state.paddleX, canvas.height - defaults.paddleHeight, defaults.paddleWidth, defaults.paddleHeight);
-        ctx.fillStyle = '#FF5722';
+        ctx.fillStyle = defaults.paddleColor;
         ctx.fill();
         ctx.closePath();
     }
@@ -114,12 +134,22 @@
                     bricks[c][r].y = brickY;
                     ctx.beginPath();
                     ctx.rect(brickX, brickY, defaults.brickWidth, defaults.brickHeight);
-                    ctx.fillStyle = '#009688';
+                    ctx.fillStyle = defaults.brickColorArray[r];
                     ctx.fill();
                     ctx.closePath();
                 }
             }
         }
+    }
+
+    function handlePaddleHit() {
+
+        // what percentage of x axis did ball hit paddle
+        var deltaX = Math.abs((x - state.paddleX) / defaults.paddleWidth);
+
+        var variation = 1.3*(0.5 - deltaX);
+        // defaults.dx += variation;
+        defaults.dy = -defaults.dy;
     }
 
     function draw() {
@@ -133,9 +163,9 @@
 
         if (y + defaults.dy < defaults.ballRadius) {
             defaults.dy = -defaults.dy;
-        } else if (y + defaults.dy > canvas.height - defaults.ballRadius) {
+        } else if (y + defaults.dy > canvas.height - defaults.ballRadius - defaults.paddleHeight + 2) {
             if (x > state.paddleX && (x < state.paddleX + defaults.paddleWidth)) {
-                defaults.dy = -defaults.dy;
+                handlePaddleHit();
             } else {
                 state.lives--;
                 if (state.lives === 0) {
@@ -145,7 +175,7 @@
                     x = canvas.width/2;
                     y = canvas.height - 30;
                     defaults.dx = 2;
-                    defaults.dy = 2;
+                    defaults.dy = -2;
                     state.paddleX = (canvas.width - defaults.paddleWidth)/2;
                 }
             }
@@ -163,7 +193,7 @@
 
         x += defaults.dx;
         y += defaults.dy;
-        requestAnimationFrame(draw);
+        // requestAnimationFrame(draw); // without using timeout, this works but speed not adjustable
     }
 
     function mouseMoveHandler(e) {
@@ -175,5 +205,5 @@
 
     document.addEventListener('mousemove', mouseMoveHandler);
 
-    draw();
+    setInterval(draw, (1000/defaults.framesPerSecond));
 })();
