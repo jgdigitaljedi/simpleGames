@@ -29,8 +29,8 @@
     };
 
     defaults.brickWidth = (canvas.width - (defaults.brickOffsetLeft*2) - (defaults.brickColumnCount * defaults.brickPadding))/defaults.brickColumnCount;
-    defaults.paddleWidth = canvas.width / 6.4;
-    defaults.ballRadius = canvas.width / 68.5;
+    defaults.paddleWidth = canvas.width / 8;
+    defaults.ballRadius = canvas.width / 80;
 
     var state = {
         score: 0,
@@ -147,8 +147,12 @@
         // what percentage of x axis did ball hit paddle
         var deltaX = Math.abs((x - state.paddleX) / defaults.paddleWidth);
 
-        var variation = 1.3*(0.5 - deltaX);
-        // defaults.dx += variation;
+        // if ball hit paddle off center then slightly change ball movement direction accordingly
+        if (deltaX > 0.55) {
+            defaults.dx += (deltaX * 1.2);
+        } else if (deltaX < 0.45) {
+            defaults.dx -= (deltaX * 1.2);
+        }
         defaults.dy = -defaults.dy;
     }
 
