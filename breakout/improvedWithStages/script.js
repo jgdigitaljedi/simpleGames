@@ -16,7 +16,7 @@
         paddleMovement: 7,
         scoreLivesColor: '#FFC107',
         ballColor: '#2196F3',
-        paddleColor: '#FF5722',
+        paddleColor: '#E0E0E0',
         brickColorArray: [
             '#F44336',
             '#9C27B0',
@@ -24,8 +24,12 @@
             '#03A9F4',
             '#009688',
             '#8BC34A',
-            '#FFEB3B'
-        ]
+            '#FFEB3B',
+            '#FF9800',
+            '#795548'
+        ],
+        gameOver: false,
+        paused: false
     };
 
     defaults.brickWidth = (canvas.width - (defaults.brickOffsetLeft*2) - (defaults.brickColumnCount * defaults.brickPadding))/defaults.brickColumnCount;
@@ -84,6 +88,22 @@
         ctx.fillText('Lives: ' + state.lives, canvas.width - 65, 20);
     }
 
+    function resetGame() {
+        document.location.reload();
+
+    }
+
+    function gameOver() {
+        clearInterval(gameInterval);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = defaults.scoreLivesColor;
+        ctx.fontStyle = '48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Game Over', canvas.width/2, canvas.height/2);
+        ctx.fillText('Click Mouse to Restart', canvas.width/2, canvas.height/2 + 50);
+        state.gameOver = true;
+    }
+
     function collisionDetection() {
         for (var c = 0; c < defaults.brickColumnCount; c++) {
             for (var r = 0; r < defaults.brickRowCount; r++) {
@@ -101,7 +121,8 @@
                         b.show = false;
                         state.score += 100;
                         if (state.score === defaults.brickRowCount*defaults.brickColumnCount*100) {
-                            alert('YOU WIN!!');
+                            // alert('YOU WIN!!');
+                            pause();
                             document.location.reload();
                         }
                     }
@@ -159,47 +180,50 @@
     }
 
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawBricks();
-        drawBall();
-        drawPaddle();
-        collisionDetection();
-        drawScore();
-        drawLives();
+        if (!state.paused) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBricks();
+            drawBall();
+            drawPaddle();
+            collisionDetection();
+            drawScore();
+            drawLives();
 
-        if (y + state.dy < defaults.ballRadius) {
-            state.dy = -state.dy;
-        } else if (y + state.dy > canvas.height - defaults.ballRadius - defaults.paddleHeight + 2) {
-            if (x > state.paddleX && (x < state.paddleX + defaults.paddleWidth)) {
-                handlePaddleHit();
-            } else {
-                state.lives--;
-                if (state.lives === 0) {
-                    alert('GAME OVER!!');
-                    document.location.reload();
+            if (y + state.dy < defaults.ballRadius) {
+                state.dy = -state.dy;
+            } else if (y + state.dy > canvas.height - defaults.ballRadius - defaults.paddleHeight + 2) {
+                if (x > state.paddleX && (x < state.paddleX + defaults.paddleWidth)) {
+                    handlePaddleHit();
                 } else {
-                    x = canvas.width/2;
-                    y = canvas.height - 30;
-                    state.dx = defaults.dx;
-                    state.dy =defaults.dy;
-                    state.paddleX = (canvas.width - defaults.paddleWidth)/2;
+                    state.lives--;
+                    if (state.lives === 0) {
+                        // alert('GAME OVER!!');
+                        gameOver();
+                        // document.location.reload();
+                    } else {
+                        x = canvas.width/2;
+                        y = canvas.height - 30;
+                        state.dx = defaults.dx;
+                        state.dy =defaults.dy;
+                        state.paddleX = (canvas.width - defaults.paddleWidth)/2;
+                    }
                 }
             }
-        }
 
-        if (x + state.dx < defaults.ballRadius || x + state.dx > canvas.width - defaults.ballRadius) {
-            state.dx = -state.dx;
-        }
+            if (x + state.dx < defaults.ballRadius || x + state.dx > canvas.width - defaults.ballRadius) {
+                state.dx = -state.dx;
+            }
 
-        if (state.rightPressed && state.paddleX < canvas.width - defaults.paddleWidth) {
-            state.paddleX += defaults.paddleMovement;
-        } else if (state.leftPressed && state.paddleX > 0) {
-            state.paddleX -= defaults.paddleMovement;
-        }
+            if (state.rightPressed && state.paddleX < canvas.width - defaults.paddleWidth) {
+                state.paddleX += defaults.paddleMovement;
+            } else if (state.leftPressed && state.paddleX > 0) {
+                state.paddleX -= defaults.paddleMovement;
+            }
 
-        x += state.dx;
-        y += state.dy;
-        requestAnimationFrame(draw); // without using timeout, this works but speed not adjustable
+            x += state.dx;
+            y += state.dy;
+            // requestAnimationFrame(draw);
+        }
     }
 
     function mouseMoveHandler(e) {
@@ -209,10 +233,20 @@
         }
     }
 
+    function mouseClickHandler(e) {
+        if (state.gameOver) {
+            resetGame();
+            state.gameOver = false;
+        } else if (state.paused) {
+            state.paused = false;
+        } else {
+            state.paused = true;
+        }
+    }
+
     document.addEventListener('mousemove', mouseMoveHandler);
 
-    // var gameInterval = setInterval(draw, (1000/defaults.framesPerSecond));
+    document.addEventListener('mouseup', mouseClickHandler);
 
-    //
-    draw();
+    var gameInterval = setInterval(draw, (1000/defaults.framesPerSecond));
 })();

@@ -1,0 +1,11 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+
+#breakout {
+    margin: 0 auto;
+    background: #263238;
+    padding: 0;
+    display: block;
+}
