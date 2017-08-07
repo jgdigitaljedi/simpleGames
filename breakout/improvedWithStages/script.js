@@ -2,35 +2,7 @@
     const canvas = document.getElementById('breakout');
     const ctx = canvas.getContext('2d');
 
-    var defaults = {
-        dx: 3,
-        dy: -3,
-        framesPerSecond: 60,
-        paddleHeight: 10,
-        brickRowCount: 6,
-        brickColumnCount: 10,
-        brickHeight: 20,
-        brickPadding: 2,
-        brickOffsetTop: 30,
-        brickOffsetLeft: 2,
-        paddleMovement: 7,
-        scoreLivesColor: '#FFC107',
-        ballColor: '#2196F3',
-        paddleColor: '#E0E0E0',
-        brickColorArray: [
-            '#F44336',
-            '#9C27B0',
-            '#3F51B5',
-            '#03A9F4',
-            '#009688',
-            '#8BC34A',
-            '#FFEB3B',
-            '#FF9800',
-            '#795548'
-        ],
-        gameOver: false,
-        paused: false
-    };
+    var defaults = window.defaults;
 
     defaults.brickWidth = (canvas.width - (defaults.brickOffsetLeft*2) - (defaults.brickColumnCount * defaults.brickPadding))/defaults.brickColumnCount;
     defaults.paddleWidth = canvas.width / 8;
@@ -49,14 +21,8 @@
     var x = canvas.width/2;
     var y = canvas.height - 30;
 
-    var bricks = [];
-    for (var c = 0; c < defaults.brickColumnCount; c++) {
-        bricks[c] = [];
-        for (var r = 0; r < defaults.brickRowCount; r++) {
-            bricks[c][r] = {x: 0, y: 0, show: true};
-        }
-    }
-
+    var bricks = window.stages.stage1();
+    console.log('bricks', bricks);
     document.addEventListener('keydown', keydownHandler);
     document.addEventListener('keyup', keyupHandler);
 
@@ -151,12 +117,15 @@
         for (var c = 0; c < defaults.brickColumnCount; c++) {
             for (var r = 0; r < defaults.brickRowCount; r++) {
                 if (bricks[c][r].show) {
-                    var brickX = (c*(defaults.brickWidth + defaults.brickPadding)) + defaults.brickOffsetLeft;
-                    var brickY = (r*(defaults.brickHeight + defaults.brickPadding)) + defaults.brickOffsetTop;
-                    bricks[c][r].x = brickX;
-                    bricks[c][r].y = brickY;
+                    // var brickX = (c*(defaults.brickWidth + defaults.brickPadding)) + defaults.brickOffsetLeft;
+                    // var brickY = (r*(defaults.brickHeight + defaults.brickPadding)) + defaults.brickOffsetTop;
+                    // bricks[c][r].x = brickX;
+                    // bricks[c][r].y = brickY;
+                    // ctx.beginPath();
+                    // ctx.rect(brickX, brickY, defaults.brickWidth, defaults.brickHeight);
+                    console.log('this brick', bricks[c][r]);
                     ctx.beginPath();
-                    ctx.rect(brickX, brickY, defaults.brickWidth, defaults.brickHeight);
+                    ctx.rect(bricks[c][r].x, bricks[c][r].y, defaults.brickWidth, defaults.brickHeight);
                     ctx.fillStyle = defaults.brickColorArray[r];
                     ctx.fill();
                     ctx.closePath();
@@ -180,7 +149,7 @@
     }
 
     function draw() {
-        if (!state.paused) {
+        if (!state.paused && bricks.length) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBricks();
             drawBall();
