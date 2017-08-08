@@ -18,7 +18,6 @@
         dy: defaults.dy,
         stage: 1
     };
-    console.log('stages length', Object.keys(window.stages).length);
 
     var x = canvas.width/2;
     var y = canvas.height - 30;
