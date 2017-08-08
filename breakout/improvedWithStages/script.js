@@ -15,14 +15,15 @@
         leftPressed: false,
         paddleX: (canvas.width - defaults.paddleWidth)/2,
         dx: defaults.dy,
-        dy: defaults.dy
+        dy: defaults.dy,
+        stage: 1
     };
+    console.log('stages length', Object.keys(window.stages).length);
 
     var x = canvas.width/2;
     var y = canvas.height - 30;
 
-    var bricks = window.stages.stage1();
-    console.log('bricks', bricks);
+    var bricks = window.stages['stage' + state.stage]();
     document.addEventListener('keydown', keydownHandler);
     document.addEventListener('keyup', keyupHandler);
 
@@ -43,20 +44,42 @@
     }
 
     function drawScore() {
+        ctx.beginPath();
         ctx.font = '16px Arial';
         ctx.fillStyle = defaults.scoreLivesColor;
+        ctx.textAlign = 'left';
         ctx.fillText('Score: ' + state.score, 8, 20);
+        ctx.fill();
     }
 
     function drawLives() {
+        ctx.beginPath();
         ctx.font = '16px Arial';
         ctx.fillStyle = defaults.scoreLivesColor;
+        ctx.textAlign = 'left';
         ctx.fillText('Lives: ' + state.lives, canvas.width - 65, 20);
+        ctx.fill();
     }
 
     function resetGame() {
         document.location.reload();
 
+    }
+
+    function pauseHandler(pause, showText) {
+        if (pause) {
+            state.paused = true;
+            if (showText) {
+                ctx.beginPath();
+                ctx.font = '36px Arial';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.fillText('PAUSED', canvas.width/2, canvas.height/2-20);
+                ctx.fill();
+            }
+        } else {
+            state.paused = false;
+        }
     }
 
     function gameOver() {
@@ -87,9 +110,23 @@
                         b.show = false;
                         state.score += 100;
                         if (state.score === defaults.brickRowCount*defaults.brickColumnCount*100) {
-                            // alert('YOU WIN!!');
-                            pause();
-                            document.location.reload();
+                            pauseHandler(true, false);
+                            if (state.stage < Object.keys(window.stages).length) {
+                                state.stage++;
+                            } else {
+                                state.stage = 1;
+                            }
+                            ctx.beginPath();
+                            ctx.fillStyle = 'white';
+                            ctx.textAlign = 'center';
+                            ctx.fontStyle = '36px Arial';
+                            ctx.fillText('Click to go to next stage', canvas.width/2, canvas.height/2 - 20);
+                            ctx.fill();
+                            bricks = window.stages['stage' + state.stage]();
+                            var x = canvas.width/2;
+                            var y = canvas.height - 30;
+                            state.dx = defaults.dx;
+                            state.dy = defaults.dy;
                         }
                     }
                 }
@@ -117,13 +154,6 @@
         for (var c = 0; c < defaults.brickColumnCount; c++) {
             for (var r = 0; r < defaults.brickRowCount; r++) {
                 if (bricks[c][r].show) {
-                    // var brickX = (c*(defaults.brickWidth + defaults.brickPadding)) + defaults.brickOffsetLeft;
-                    // var brickY = (r*(defaults.brickHeight + defaults.brickPadding)) + defaults.brickOffsetTop;
-                    // bricks[c][r].x = brickX;
-                    // bricks[c][r].y = brickY;
-                    // ctx.beginPath();
-                    // ctx.rect(brickX, brickY, defaults.brickWidth, defaults.brickHeight);
-                    console.log('this brick', bricks[c][r]);
                     ctx.beginPath();
                     ctx.rect(bricks[c][r].x, bricks[c][r].y, defaults.brickWidth, defaults.brickHeight);
                     ctx.fillStyle = defaults.brickColorArray[r];
@@ -207,9 +237,9 @@
             resetGame();
             state.gameOver = false;
         } else if (state.paused) {
-            state.paused = false;
+            pauseHandler(false)
         } else {
-            state.paused = true;
+            pauseHandler(true, true);
         }
     }
 

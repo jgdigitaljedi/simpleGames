@@ -13,7 +13,7 @@
         paddleMovement: 7,
         scoreLivesColor: '#FFC107',
         ballColor: '#2196F3',
-        paddleColor: '#E0E0E0',
+        paddleColor: '#9E9E9E',
         brickColorArray: [
             '#F44336',
             '#9C27B0',
