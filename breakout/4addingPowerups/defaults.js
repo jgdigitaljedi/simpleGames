@@ -26,6 +26,10 @@
             '#795548'
         ],
         gameOver: false,
-        paused: false
+        paused: false,
+        powerUpSpeed: 2,
+        powerUpActivateCount: 3,
+        powerUpRadius: 8,
+        powerUpDuration: 15000
     };
 })();

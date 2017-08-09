@@ -16,10 +16,58 @@
         paddleX: (canvas.width - defaults.paddleWidth)/2,
         dx: defaults.dy,
         dy: defaults.dy,
-        stage: 1
+        stage: 1,
+        paddleWidth: defaults.paddleWidth,
+        powerUpCounter: 0,
+        powerUpFalling: false,
+        px: 5,
+        py: 5
     };
 
-    var x = canvas.width/2;
+    var powerUps = [
+        {
+            symbol: '\u25bc', // slow down
+            color: '#D50000',
+            activePower: function() {
+                state.dy = 1;
+            },
+            endPower: function() {
+                state.dy = defaults.dy;
+            }
+        },
+        {
+            symbol: '\u25b2', // speed up
+            color: '#00C853',
+            activePower: function() {
+                state.dy = 5;
+            },
+            endPower: function() {
+                state.dy = defaults.dy;
+            }
+        },
+        {
+            symbol: '\u2b0c', // large paddle
+            color: '#FF6F00',
+            activePower: function() {
+                state.paddleWidth = defaults.paddleWidth * 1.25;
+            },
+            endPower: function() {
+                state.paddleWidth = defaults.paddleWidth;
+            }
+        },
+        {
+            symbol: 'S', // small paddle
+            color: '#C51162',
+            activePower: function() {
+                state.paddleWidth = defaults.paddleWidth * 0.75;
+            },
+            endPower: function() {
+                state.paddleWidth = defaults.paddleWidth;
+            }
+        },
+    ];
+
+    var x = canvas.width / 2;
     var y = canvas.height - 30;
 
     var bricks = window.stages['stage' + state.stage]();
@@ -62,7 +110,28 @@
 
     function resetGame() {
         document.location.reload();
+    }
 
+    function drawPowerUp() {
+        ctx.beginPath();
+        ctx.arc(state.px, state.py, defaults.powerUpRadius, 0, Math.PI*2);
+        ctx.fillStyle = state.powerUpFalling.color;
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.fontStyle = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(state.powerUpFalling.symbol, state.px, state.py);
+        ctx.closePath();
+    }
+
+    function powerUp() {
+        state.powerUpCounter = 0;
+        const pLen = powerUps.length;
+        const randPu = Math.floor(Math.random() * pLen);
+        state.powerUpFalling = powerUps[randPu];
+        state.px = Math.floor(Math.random() * (canvas.width - defaults.powerUpRadius));
+        if (state.px < defaults.powerUpRadius) state.px = defaults.powerUpRadius;
     }
 
     function pauseHandler(pause, showText) {
@@ -92,15 +161,36 @@
         state.gameOver = true;
     }
 
-    function collisionDetection() {
+    function powerUpActivate() {
+        var action = state.powerUpFalling.activePower;
+        var endAction = state.powerUpFalling.endPower;
+        action();
+        setTimeout(function () {
+            endAction();
+        }, defaults.powerUpDuration)
+    }
+
+    function powerupCollision() {
+        if (state.px + defaults.powerUpRadius >= state.paddleX &&
+            state.px <= state.paddleX + state.paddleWidth &&
+            state.py >= canvas.height - defaults.paddleHeight) {
+                powerUpActivate();
+        }
+    }
+
+    function collisionDetection(x, y) {
         for (var c = 0; c < defaults.brickColumnCount; c++) {
             for (var r = 0; r < defaults.brickRowCount; r++) {
                 var b = bricks[c][r];
                 if (b.show) {
-                    if ((x + defaults.ballRadius) > b.x
-                        && x - defaults.ballRadius < b.x+defaults.brickWidth
-                        && y > (b.y - defaults.ballRadius)
-                        && y < b.y+defaults.brickHeight+defaults.ballRadius) {
+                    if ((x + defaults.ballRadius) >= b.x
+                        && x - defaults.ballRadius <= b.x+defaults.brickWidth
+                        && y >= (b.y - defaults.ballRadius)
+                        && y <= b.y+defaults.brickHeight+defaults.ballRadius) {
+                        if (!state.powerUpFalling) {
+                            state.powerUpCounter++;
+                        }
+                        if (state.powerUpCounter >= defaults.powerUpActivateCount) powerUp();
                         if (y < b.y + defaults.brickHeight + 2) { // if collision occurs on side of brick
                             state.dx = -state.dx;
                         } else { // collision occurred on top or bottom
@@ -143,7 +233,7 @@
 
     function drawPaddle() {
         ctx.beginPath();
-        ctx.rect(state.paddleX, canvas.height - defaults.paddleHeight, defaults.paddleWidth, defaults.paddleHeight);
+        ctx.rect(state.paddleX, canvas.height - defaults.paddleHeight, state.paddleWidth, defaults.paddleHeight);
         ctx.fillStyle = defaults.paddleColor;
         ctx.fill();
         ctx.closePath();
@@ -166,7 +256,7 @@
     function handlePaddleHit() {
 
         // what percentage of x axis did ball hit paddle
-        var deltaX = Math.abs((x - state.paddleX) / defaults.paddleWidth);
+        var deltaX = Math.abs((x - state.paddleX) / state.paddleWidth);
 
         // if ball hit paddle off center then slightly change ball movement direction accordingly
         if (deltaX > 0.55) {
@@ -180,17 +270,21 @@
     function draw() {
         if (!state.paused && bricks.length) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (state.powerUpFalling) {
+                drawPowerUp();
+                powerupCollision();
+            }
             drawBricks();
             drawBall();
             drawPaddle();
-            collisionDetection();
+            collisionDetection(x, y);
             drawScore();
             drawLives();
 
             if (y + state.dy < defaults.ballRadius) {
                 state.dy = -state.dy;
             } else if (y + state.dy > canvas.height - defaults.ballRadius - defaults.paddleHeight + 2) {
-                if (x > state.paddleX && (x < state.paddleX + defaults.paddleWidth)) {
+                if (x > state.paddleX && (x < state.paddleX + state.paddleWidth)) {
                     handlePaddleHit();
                 } else {
                     state.lives--;
@@ -203,7 +297,7 @@
                         y = canvas.height - 30;
                         state.dx = defaults.dx;
                         state.dy =defaults.dy;
-                        state.paddleX = (canvas.width - defaults.paddleWidth)/2;
+                        state.paddleX = (canvas.width - state.paddleWidth)/2;
                     }
                 }
             }
@@ -212,7 +306,7 @@
                 state.dx = -state.dx;
             }
 
-            if (state.rightPressed && state.paddleX < canvas.width - defaults.paddleWidth) {
+            if (state.rightPressed && state.paddleX < canvas.width - state.paddleWidth) {
                 state.paddleX += defaults.paddleMovement;
             } else if (state.leftPressed && state.paddleX > 0) {
                 state.paddleX -= defaults.paddleMovement;
@@ -220,14 +314,21 @@
 
             x += state.dx;
             y += state.dy;
+            if (state.powerUpFalling) {
+                state.py += defaults.powerUpSpeed;
+                if (state.py > canvas.height) {
+                    state.powerUpFalling = false;
+                    state.py = 5;
+                }
+            }
             // requestAnimationFrame(draw);
         }
     }
 
     function mouseMoveHandler(e) {
         var relativeX = e.clientX - canvas.offsetLeft;
-        if (relativeX > defaults.paddleWidth/2 && relativeX < canvas.width - defaults.paddleWidth/2) {
-            state.paddleX = relativeX - defaults.paddleWidth/2;
+        if (relativeX > state.paddleWidth/2 && relativeX < canvas.width - state.paddleWidth/2) {
+            state.paddleX = relativeX - state.paddleWidth/2;
         }
     }
 
