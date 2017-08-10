@@ -1,20 +1,20 @@
 (function () {
     window.defaults = {
-        dx: 3,
-        dy: -3,
-        framesPerSecond: 60,
-        paddleHeight: 10,
-        brickRowCount: 6,
-        brickColumnCount: 10,
-        brickHeight: 20,
-        brickPadding: 2,
-        brickOffsetTop: 30,
-        brickOffsetLeft: 2,
-        paddleMovement: 7,
-        scoreLivesColor: '#FFC107',
-        ballColor: '#2196F3',
-        paddleColor: '#9E9E9E',
-        brickColorArray: [
+        dx: 3,                          // starting x direction for ball
+        dy: -3,                         // starting y direction for ball
+        framesPerSecond: 60,            // frames per second
+        paddleHeight: 10,               // paddle height
+        brickRowCount: 6,               // amount of rows of bricks
+        brickColumnCount: 10,           // amount of columns of bricks
+        brickHeight: 20,                // height of bricks
+        brickPadding: 2,                // space between bricks
+        brickOffsetTop: 30,             // pixels from top to start creating bricks
+        brickOffsetLeft: 5,             // pixels from left to starting creating bricks
+        paddleMovement: 7,              // pixels paddle can move each frame
+        scoreLivesColor: '#FFC107',     // color of score and lives text
+        ballColor: '#2196F3',           // color of ball
+        paddleColor: '#9E9E9E',         // color of paddle
+        brickColorArray: [              // array of colors for bricks
             '#F44336',
             '#9C27B0',
             '#3F51B5',
@@ -25,11 +25,11 @@
             '#FF9800',
             '#795548'
         ],
-        gameOver: false,
-        paused: false,
-        powerUpSpeed: 2,
-        powerUpActivateCount: 3,
-        powerUpRadius: 8,
-        powerUpDuration: 15000
+        gameOver: false,                // tracks game over state
+        paused: false,                  // tracks pause state
+        powerUpSpeed: 2,                // number of pixels powerup moves vertically per frame
+        powerUpActivateCount: 20,       // number of bricks hit before powerup falls
+        powerUpRadius: 8,               // radius of the powerup ball
+        powerUpDuration: 20000          // duration for which powerup lasts
     };
 })();

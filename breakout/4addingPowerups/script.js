@@ -1,38 +1,50 @@
 (function () {
+    /*********** BUGS *************
+     * - ball doesn't reset position when changing stages
+     * - ball changes direction sometimes when powerup collected
+     */
+
+    // create main canvas and get 2d context
     const canvas = document.getElementById('breakout');
     const ctx = canvas.getContext('2d');
 
+    // pull in default values and assign to variable
     var defaults = window.defaults;
 
+    // setting last default values that require others to calculate
     defaults.brickWidth = (canvas.width - (defaults.brickOffsetLeft*2) - (defaults.brickColumnCount * defaults.brickPadding))/defaults.brickColumnCount;
     defaults.paddleWidth = canvas.width / 8;
     defaults.ballRadius = canvas.width / 80;
 
+    // sets starting game state
     var state = {
-        score: 0,
-        lives: 3,
-        rightPressed: false,
-        leftPressed: false,
-        paddleX: (canvas.width - defaults.paddleWidth)/2,
-        dx: defaults.dy,
-        dy: defaults.dy,
-        stage: 1,
-        paddleWidth: defaults.paddleWidth,
-        powerUpCounter: 0,
-        powerUpFalling: false,
-        px: 5,
-        py: 5
+        score: 0,                                           // score
+        lives: 3,                                           // lives
+        rightPressed: false,                                // right arrow being pressed
+        leftPressed: false,                                 // left arrow being pressed
+        paddleX: (canvas.width - defaults.paddleWidth)/2,   // horizontol paddle position
+        dx: defaults.dx,                                    // horizontal ball speed
+        dy: defaults.dy,                                    // vertical ball speed
+        stage: 1,                                           // stage
+        paddleWidth: defaults.paddleWidth,                  // width of paddle
+        powerUpCounter: 0,                                  // counts bricks hit to know when to drop powerup
+        powerUpFalling: false,                              // tracks whether a powerup is falling
+        px: 5,                                              // powerup x position
+        py: 5                                               // powerup y position
     };
 
+    // powerup definitions
     var powerUps = [
         {
             symbol: '\u25bc', // slow down
             color: '#D50000',
             activePower: function() {
                 state.dy = 1;
+                state.dx = 1;
             },
             endPower: function() {
                 state.dy = defaults.dy;
+                state.dx = defaults.dx;
             }
         },
         {
@@ -40,9 +52,11 @@
             color: '#00C853',
             activePower: function() {
                 state.dy = 5;
+                state.dx = 5;
             },
             endPower: function() {
                 state.dy = defaults.dy;
+                state.dx = 5;
             }
         },
         {
@@ -67,13 +81,18 @@
         },
     ];
 
+    // starting ball position
     var x = canvas.width / 2;
     var y = canvas.height - 30;
 
+    // starting bricks layout
     var bricks = window.stages['stage' + state.stage]();
+
+    // adding arrow key event listeners for movement
     document.addEventListener('keydown', keydownHandler);
     document.addEventListener('keyup', keyupHandler);
 
+    // moves paddle when key pressed
     function keydownHandler(e) {
         if (e.keyCode === 39) {
             state.rightPressed = true;
@@ -82,6 +101,7 @@
         }
     }
 
+    // resets key pressed state to stop paddle movement on keyup
     function keyupHandler(e) {
         if (e.keyCode === 39) {
             state.rightPressed = false;
@@ -90,6 +110,7 @@
         }
     }
 
+    // draws score
     function drawScore() {
         ctx.beginPath();
         ctx.font = '16px Arial';
@@ -99,6 +120,7 @@
         ctx.fill();
     }
 
+    // draws lives
     function drawLives() {
         ctx.beginPath();
         ctx.font = '16px Arial';
@@ -108,10 +130,12 @@
         ctx.fill();
     }
 
+    // completely resets game state
     function resetGame() {
         document.location.reload();
     }
 
+    // draws powerups
     function drawPowerUp() {
         ctx.beginPath();
         ctx.arc(state.px, state.py, defaults.powerUpRadius, 0, Math.PI*2);
@@ -125,6 +149,7 @@
         ctx.closePath();
     }
 
+    // ramdomly selects power and x position to fall from and sets state
     function powerUp() {
         state.powerUpCounter = 0;
         const pLen = powerUps.length;
@@ -134,6 +159,7 @@
         if (state.px < defaults.powerUpRadius) state.px = defaults.powerUpRadius;
     }
 
+    // handles pause state
     function pauseHandler(pause, showText) {
         if (pause) {
             state.paused = true;
@@ -150,6 +176,7 @@
         }
     }
 
+    // handles game over state
     function gameOver() {
         clearInterval(gameInterval);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -161,6 +188,7 @@
         state.gameOver = true;
     }
 
+    // starts and stops powerup
     function powerUpActivate() {
         var action = state.powerUpFalling.activePower;
         var endAction = state.powerUpFalling.endPower;
@@ -170,6 +198,7 @@
         }, defaults.powerUpDuration)
     }
 
+    // detects when powerup collected and triggers it
     function powerupCollision() {
         if (state.px + defaults.powerUpRadius >= state.paddleX &&
             state.px <= state.paddleX + state.paddleWidth &&
@@ -178,6 +207,7 @@
         }
     }
 
+    // detects when ball hits bricks, handles ball direction change, and detects when all bricks are gone and handles stage change
     function collisionDetection(x, y) {
         for (var c = 0; c < defaults.brickColumnCount; c++) {
             for (var r = 0; r < defaults.brickRowCount; r++) {
@@ -212,8 +242,8 @@
                             ctx.fillText('Click to go to next stage', canvas.width/2, canvas.height/2 - 20);
                             ctx.fill();
                             bricks = window.stages['stage' + state.stage]();
-                            var x = canvas.width/2;
-                            var y = canvas.height - 30;
+                            x = canvas.width/2;
+                            y = canvas.height - 30;
                             state.dx = defaults.dx;
                             state.dy = defaults.dy;
                         }
@@ -223,6 +253,7 @@
         }
     }
 
+    // draws the ball
     function drawBall() {
         ctx.beginPath();
         ctx.arc(x, y, defaults.ballRadius, 0, Math.PI*2);
@@ -231,6 +262,7 @@
         ctx.closePath();
     }
 
+    // draws the paddle
     function drawPaddle() {
         ctx.beginPath();
         ctx.rect(state.paddleX, canvas.height - defaults.paddleHeight, state.paddleWidth, defaults.paddleHeight);
@@ -239,6 +271,7 @@
         ctx.closePath();
     }
 
+    // draws the bricks
     function drawBricks() {
         for (var c = 0; c < defaults.brickColumnCount; c++) {
             for (var r = 0; r < defaults.brickRowCount; r++) {
@@ -253,6 +286,7 @@
         }
     }
 
+    // logic to change ball direction depending on where it hits paddle
     function handlePaddleHit() {
 
         // what percentage of x axis did ball hit paddle
@@ -267,6 +301,7 @@
         state.dy = -state.dy;
     }
 
+    // main draw function that triggers other draw functions and handles some game logic
     function draw() {
         if (!state.paused && bricks.length) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -325,6 +360,7 @@
         }
     }
 
+    // handles mouse movements within canvas area to use mouse instead of arrows
     function mouseMoveHandler(e) {
         var relativeX = e.clientX - canvas.offsetLeft;
         if (relativeX > state.paddleWidth/2 && relativeX < canvas.width - state.paddleWidth/2) {
@@ -332,6 +368,7 @@
         }
     }
 
+    // handles mouse click to pause, unpause, or reset game state
     function mouseClickHandler(e) {
         if (state.gameOver) {
             resetGame();
@@ -343,9 +380,10 @@
         }
     }
 
+    // event listeners to bind mouse events
     document.addEventListener('mousemove', mouseMoveHandler);
-
     document.addEventListener('mouseup', mouseClickHandler);
 
+    // main interval to start game
     var gameInterval = setInterval(draw, (1000/defaults.framesPerSecond));
 })();
