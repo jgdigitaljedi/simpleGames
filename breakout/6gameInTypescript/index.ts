@@ -1,3 +1,5 @@
 import { Breakout } from './src/main';
 
-export default Breakout;
+new Breakout();
+
+// export default game;
