@@ -4,14 +4,15 @@
   "description": "Simple breakout game",
   "main": "scripts.js",
   "dependencies": {
-    "browser-sync": "^2.18.13",
-    "gulp": "^3.9.1"
+    "src": "^1.1.2"
   },
   "devDependencies": {
+    "parcel-bundler": "^1.9.7",
     "typescript": "^2.9.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel index.html"
   },
   "keywords": [
     "breakout",

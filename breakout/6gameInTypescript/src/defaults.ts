@@ -1,4 +1,4 @@
-export const defaults = {
+export const Defaults = {
   dx: 3, // starting x direction for ball
   dy: -3, // starting y direction for ball
   framesPerSecond: 60, // frames per second

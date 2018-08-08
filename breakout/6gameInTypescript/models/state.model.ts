@@ -9,7 +9,9 @@ export interface IState {
   stage: number; // stage
   paddleWidth: number; // width of paddle
   powerUpCounter: number; // counts bricks hit to know when to drop powerup
-  powerUpFalling: number; // tracks whether a powerup is falling
+  powerUpFalling: any; // tracks whether a powerup is falling
   px: number; // powerup x position
   py: number;
+  paused?: boolean;
+  gameOver?: boolean;
 }
