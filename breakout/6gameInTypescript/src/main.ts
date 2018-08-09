@@ -1,6 +1,9 @@
 import { Defaults } from "./defaults";
+import { Handler } from './handler';
 import { IDefaults } from "../models/defaults.model";
 import { IState } from "../models/state.model";
+import { Stages } from "./stages";
+import { Powerups } from './powerups';
 
 // @TODO: get it working first, then refactor into several files. Doing it all at once is messy and overwhelming.
 /*********** BUGS *************
@@ -18,35 +21,37 @@ export class Breakout {
   powerups: any[];
   stages: any;
   gameInterval: any;
+  private _handler: Handler;
+  private _stages: Stages;
+  private _powerups: Powerups
   constructor() {
     this.initializeGame();
   }
 
   initializeGame() {
+    this._handler = new Handler();
+    this._stages = new Stages();
+    this._powerups = new Powerups();
     this._initVariables();
-    document.addEventListener("keydown", this.keydownHandler.bind(this));
+    document.addEventListener("keydown", this.keydown.bind(this));
     document.addEventListener("keyup", this.keyupHandler.bind(this));
     document.addEventListener("mousemove", this.mouseMoveHandler.bind(this));
     document.addEventListener("mouseup", this.mouseClickHandler.bind(this));
   }
 
   // moves paddle when key pressed
-  keydownHandler(e) {
-    console.log("this.state in down", this.state);
-    if (e.keyCode === 39) {
-      this.state.rightPressed = true;
-    } else if (e.keyCode === 37) {
-      this.state.leftPressed = true;
+  keydown(e: KeyboardEvent): void {
+    const which: string = this._handler.keydownHandler(e);
+    if (which && which !== '') {
+      this.state[which] = true;
     }
   }
 
   // resets key pressed state to stop paddle movement on keyup
-  keyupHandler(e) {
-    console.log("this.state in up", this.state);
-    if (e.keyCode === 39) {
-      this.state.rightPressed = false;
-    } else if (e.keyCode === 37) {
-      this.state.leftPressed = false;
+  keyupHandler(e: KeyboardEvent): void {
+    const which: string = this._handler.keyupHandler(e);
+    if (which && which !== '') {
+      this.state[which] = false;
     }
   }
 
@@ -65,7 +70,7 @@ export class Breakout {
       this._resetGame();
       this.state.gameOver = false;
     } else if (this.state.paused) {
-      this._pauseHandler(false, false);
+      this._pauseHandler(false);
     } else {
       this._pauseHandler(true, true);
     }
@@ -91,7 +96,7 @@ export class Breakout {
     const action = this.state.powerUpFalling.activePower;
     const endAction = this.state.powerUpFalling.endPower;
     action();
-    setTimeout(function() {
+    setTimeout(function () {
       endAction();
     }, this.defaults.powerUpDuration);
   }
@@ -106,20 +111,11 @@ export class Breakout {
     }
   }
 
-  private _pauseHandler(pause: boolean, showText: boolean) {
+  private _pauseHandler(pause: boolean, showText?: boolean) {
     if (pause) {
       this.state.paused = true;
       if (showText) {
-        this.ctx.beginPath();
-        this.ctx.font = "36px Arial";
-        this.ctx.fillStyle = "white";
-        this.ctx.textAlign = "center";
-        this.ctx.fillText(
-          "PAUSED",
-          this.canvas.width / 2,
-          this.canvas.height / 2 - 20
-        );
-        this.ctx.fill();
+        this._handler.pauseGame(this.ctx, this.canvas);
       }
     } else {
       this.state.paused = false;
@@ -128,20 +124,7 @@ export class Breakout {
 
   private _gameOver() {
     clearInterval(this.gameInterval);
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.fillStyle = this.defaults.scoreLivesColor;
-    // this.ctx.fontStyle = '48px Arial';
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(
-      "Game Over",
-      this.canvas.width / 2,
-      this.canvas.height / 2
-    );
-    this.ctx.fillText(
-      "Click Mouse to Restart",
-      this.canvas.width / 2,
-      this.canvas.height / 2 + 50
-    );
+    this._handler.gameOver(this.ctx, this.canvas, this.defaults);
     this.state.gameOver = true;
   }
 
@@ -153,9 +136,9 @@ export class Breakout {
           if (
             x + this.defaults.ballRadius >= b.x &&
             x - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) <=
-              b.x + this.defaults.brickWidth &&
+            b.x + this.defaults.brickWidth &&
             y >=
-              b.y - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) &&
+            b.y - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) &&
             y <= b.y + this.defaults.brickHeight + this.defaults.ballRadius
           ) {
             if (!this.state.powerUpFalling) {
@@ -327,9 +310,9 @@ export class Breakout {
       } else if (
         this.y + this.state.dy >
         this.canvas.height -
-          (this.defaults.ballRadius ? this.defaults.ballRadius : 0) -
-          this.defaults.paddleHeight +
-          2
+        (this.defaults.ballRadius ? this.defaults.ballRadius : 0) -
+        this.defaults.paddleHeight +
+        2
       ) {
         if (
           this.x > this.state.paddleX &&
@@ -355,10 +338,10 @@ export class Breakout {
 
       if (
         this.x + this.state.dx <
-          (this.defaults.ballRadius ? this.defaults.ballRadius : 0) ||
+        (this.defaults.ballRadius ? this.defaults.ballRadius : 0) ||
         this.x + this.state.dx >
-          this.canvas.width -
-            (this.defaults.ballRadius ? this.defaults.ballRadius : 0)
+        this.canvas.width -
+        (this.defaults.ballRadius ? this.defaults.ballRadius : 0)
       ) {
         this.state.dx = -this.state.dx;
       }
@@ -409,132 +392,6 @@ export class Breakout {
     };
   }
 
-  private _initPowerups() {
-    this.powerups = [
-      {
-        symbol: "\u25bc", // slow down
-        color: "#D50000",
-        activePower: () => {
-          this.state.dy = 1;
-          this.state.dx = 1;
-        },
-        endPower: () => {
-          this.state.dy =
-            this.state.dy < 0 ? -this.defaults.dy : this.defaults.dy;
-          this.state.dx =
-            this.state.dx < 0 ? -this.defaults.dx : this.defaults.dx;
-        }
-      },
-      {
-        symbol: "\u25b2", // speed up
-        color: "#00C853",
-        activePower: () => {
-          this.state.dy = 5;
-          this.state.dx = 5;
-        },
-        endPower: () => {
-          this.state.dy =
-            this.state.dy < 0 ? -this.defaults.dy : this.defaults.dy;
-          this.state.dx =
-            this.state.dx < 0 ? -this.defaults.dx : this.defaults.dx;
-        }
-      },
-      {
-        symbol: "\u2b0c", // large paddle
-        color: "#FF6F00",
-        activePower: () => {
-          this.state.paddleWidth = this.defaults.paddleWidth * 1.25;
-        },
-        endPower: () => {
-          this.state.paddleWidth = this.defaults.paddleWidth;
-        }
-      },
-      {
-        symbol: "S", // small paddle
-        color: "#C51162",
-        activePower: () => {
-          this.state.paddleWidth = this.defaults.paddleWidth * 0.75;
-        },
-        endPower: () => {
-          this.state.paddleWidth = this.defaults.paddleWidth;
-        }
-      }
-    ];
-  }
-
-  private _initStages() {
-    this.stages = {
-      stage1: () => {
-        var stage: any[] = [];
-        this.defaults.brickRowCount = 6;
-        for (var c = 0; c < this.defaults.brickColumnCount; c++) {
-          stage[c] = [];
-          for (var r = 0; r < this.defaults.brickRowCount; r++) {
-            var brickX =
-              c *
-                ((this.defaults.brickWidth ? this.defaults.brickWidth : 0) +
-                  this.defaults.brickPadding) +
-              this.defaults.brickOffsetLeft;
-            var brickY =
-              r * (this.defaults.brickHeight + this.defaults.brickPadding) +
-              this.defaults.brickOffsetTop;
-            stage[c][r] = { x: brickX, y: brickY, show: true };
-          }
-        }
-        return stage;
-      },
-      stage2: () => {
-        var stage: any[] = [];
-        this.defaults.brickRowCount = 8;
-        for (var c = 0; c < this.defaults.brickColumnCount; c++) {
-          stage[c] = [];
-          for (var r = 0; r < this.defaults.brickRowCount; r++) {
-            var brickX =
-              c *
-                ((this.defaults.brickWidth ? this.defaults.brickWidth : 0) +
-                  this.defaults.brickPadding) +
-              this.defaults.brickOffsetLeft;
-            var brickY =
-              r * (this.defaults.brickHeight + this.defaults.brickPadding) +
-              this.defaults.brickOffsetTop;
-            stage[c][r] = { x: brickX, y: brickY };
-            if (c < r) {
-              stage[c][r].show = false;
-            } else {
-              stage[c][r].show = true;
-            }
-          }
-        }
-        return stage;
-      },
-      stage3: () => {
-        var stage: any[] = [];
-        this.defaults.brickRowCount = 8;
-        for (var c = 0; c < this.defaults.brickColumnCount; c++) {
-          stage[c] = [];
-          for (var r = 0; r < this.defaults.brickRowCount; r++) {
-            var brickX =
-              c *
-                ((this.defaults.brickWidth ? this.defaults.brickWidth : 0) +
-                  this.defaults.brickPadding) +
-              this.defaults.brickOffsetLeft;
-            var brickY =
-              r * (this.defaults.brickHeight + this.defaults.brickPadding) +
-              this.defaults.brickOffsetTop;
-            var showBrick;
-            if (r % 2 === 0) {
-              showBrick = c % 2 === 0;
-            } else {
-              showBrick = c % 2 === 1;
-            }
-            stage[c][r] = { x: brickX, y: brickY, show: showBrick };
-          }
-        }
-        return stage;
-      }
-    };
-  }
-
   private _initBallPosition() {
     this.x = this.canvas.width / 2;
     this.y = this.canvas.height - 30;
@@ -555,8 +412,8 @@ export class Breakout {
     this.ctx = this.canvas.getContext("2d");
     this._initDefaults();
     this._initState();
-    this._initPowerups();
-    this._initStages();
+    this.powerups = this._powerups.getPowerUps(this.state, this.defaults);
+    this.stages = this._stages.getStages(this.defaults);
     this._initBallPosition();
 
     this.bricks = this.stages["stage" + this.state.stage]();
