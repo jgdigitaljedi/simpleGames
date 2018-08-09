@@ -12,6 +12,6 @@ export interface IState {
   powerUpFalling: any; // tracks whether a powerup is falling
   px: number; // powerup x position
   py: number;
-  paused?: boolean;
+  paused: boolean;
   gameOver?: boolean;
 }
