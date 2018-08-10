@@ -1,7 +1,7 @@
 export const Defaults = {
   dx: 3, // starting x direction for ball
   dy: -3, // starting y direction for ball
-  framesPerSecond: 60, // frames per second
+  framesPerSecond: 75, // frames per second
   paddleHeight: 10, // paddle height
   brickRowCount: 6, // amount of rows of bricks
   brickColumnCount: 10, // amount of columns of bricks

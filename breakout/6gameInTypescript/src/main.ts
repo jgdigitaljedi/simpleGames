@@ -1,11 +1,11 @@
 import { Defaults } from "./defaults";
-import { Handler } from './handler';
+import { Handler } from "./handler";
 import { IDefaults } from "../models/defaults.model";
 import { IState } from "../models/state.model";
 import { Stages } from "./stages";
-import { Powerups } from './powerups';
+import { Powerups } from "./powerups";
+import { Draw } from "./draw";
 
-// @TODO: get it working first, then refactor into several files. Doing it all at once is messy and overwhelming.
 /*********** BUGS *************
  * - ball doesn't reset position when changing stages
  * - ball changes direction sometimes when powerup collected
@@ -23,7 +23,8 @@ export class Breakout {
   gameInterval: any;
   private _handler: Handler;
   private _stages: Stages;
-  private _powerups: Powerups
+  private _powerups: Powerups;
+  private _drawClass: Draw;
   constructor() {
     this.initializeGame();
   }
@@ -32,6 +33,7 @@ export class Breakout {
     this._handler = new Handler();
     this._stages = new Stages();
     this._powerups = new Powerups();
+    this._drawClass = new Draw();
     this._initVariables();
     document.addEventListener("keydown", this.keydown.bind(this));
     document.addEventListener("keyup", this.keyupHandler.bind(this));
@@ -42,7 +44,7 @@ export class Breakout {
   // moves paddle when key pressed
   keydown(e: KeyboardEvent): void {
     const which: string = this._handler.keydownHandler(e);
-    if (which && which !== '') {
+    if (which && which !== "") {
       this.state[which] = true;
     }
   }
@@ -50,7 +52,7 @@ export class Breakout {
   // resets key pressed state to stop paddle movement on keyup
   keyupHandler(e: KeyboardEvent): void {
     const which: string = this._handler.keyupHandler(e);
-    if (which && which !== '') {
+    if (which && which !== "") {
       this.state[which] = false;
     }
   }
@@ -96,7 +98,7 @@ export class Breakout {
     const action = this.state.powerUpFalling.activePower;
     const endAction = this.state.powerUpFalling.endPower;
     action();
-    setTimeout(function () {
+    setTimeout(function() {
       endAction();
     }, this.defaults.powerUpDuration);
   }
@@ -129,16 +131,16 @@ export class Breakout {
   }
 
   private _collisionDetection(x, y) {
-    for (var c = 0; c < this.defaults.brickColumnCount; c++) {
-      for (var r = 0; r < this.defaults.brickRowCount; r++) {
-        var b = this.bricks[c][r];
+    for (let c = 0; c < this.defaults.brickColumnCount; c++) {
+      for (let r = 0; r < this.defaults.brickRowCount; r++) {
+        let b = this.bricks[c][r];
         if (b.show) {
           if (
             x + this.defaults.ballRadius >= b.x &&
             x - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) <=
-            b.x + this.defaults.brickWidth &&
+              b.x + this.defaults.brickWidth &&
             y >=
-            b.y - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) &&
+              b.y - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) &&
             y <= b.y + this.defaults.brickHeight + this.defaults.ballRadius
           ) {
             if (!this.state.powerUpFalling) {
@@ -201,106 +203,29 @@ export class Breakout {
     this.state.dy = -this.state.dy;
   }
 
-  private _drawScore() {
-    this.ctx.beginPath();
-    this.ctx.font = "16px Arial";
-    this.ctx.fillStyle = this.defaults.scoreLivesColor;
-    this.ctx.textAlign = "left";
-    this.ctx.fillText("Score: " + this.state.score, 8, 20);
-    this.ctx.fill();
-  }
-
-  private _drawLives() {
-    this.ctx.beginPath();
-    this.ctx.font = "16px Arial";
-    this.ctx.fillStyle = this.defaults.scoreLivesColor;
-    this.ctx.textAlign = "left";
-    this.ctx.fillText("Lives: " + this.state.lives, this.canvas.width - 65, 20);
-    this.ctx.fill();
-  }
-
-  private _drawPowerUp() {
-    this.ctx.beginPath();
-    this.ctx.arc(
-      this.state.px,
-      this.state.py,
-      this.defaults.powerUpRadius,
-      0,
-      Math.PI * 2
-    );
-    this.ctx.fillStyle = this.state.powerUpFalling.color;
-    this.ctx.fill();
-    this.ctx.fillStyle = "white";
-    // this.ctx.fontStyle = '10px Arial';
-    this.ctx.textAlign = "center";
-    this.ctx.textBaseline = "middle";
-    this.ctx.fillText(
-      this.state.powerUpFalling.symbol,
-      this.state.px,
-      this.state.py
-    );
-    this.ctx.closePath();
-  }
-
-  private _drawBall() {
-    this.ctx.beginPath();
-    this.ctx.arc(
-      this.x,
-      this.y,
-      this.defaults.ballRadius ? this.defaults.ballRadius : 0,
-      0,
-      Math.PI * 2
-    );
-    this.ctx.fillStyle = this.defaults.ballColor;
-    this.ctx.fill();
-    this.ctx.closePath();
-  }
-
-  private _drawPaddle() {
-    this.ctx.beginPath();
-    this.ctx.rect(
-      this.state.paddleX,
-      this.canvas.height - this.defaults.paddleHeight,
-      this.state.paddleWidth,
-      this.defaults.paddleHeight
-    );
-    this.ctx.fillStyle = this.defaults.paddleColor;
-    this.ctx.fill();
-    this.ctx.closePath();
-  }
-
-  private _drawBricks() {
-    for (var c = 0; c < this.defaults.brickColumnCount; c++) {
-      for (var r = 0; r < this.defaults.brickRowCount; r++) {
-        if (this.bricks[c][r].show) {
-          this.ctx.beginPath();
-          this.ctx.rect(
-            this.bricks[c][r].x,
-            this.bricks[c][r].y,
-            this.defaults.brickWidth ? this.defaults.brickWidth : 0,
-            this.defaults.brickHeight
-          );
-          this.ctx.fillStyle = this.defaults.brickColorArray[r];
-          this.ctx.fill();
-          this.ctx.closePath();
-        }
-      }
-    }
-  }
-
   private _draw() {
     if (!this.state.paused && this.bricks.length) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       if (this.state.powerUpFalling) {
-        this._drawPowerUp();
+        this._drawClass.drawPowerUp(this.ctx, this.state, this.defaults);
         this._powerupCollision();
       }
-      this._drawBricks();
-      this._drawBall();
-      this._drawPaddle();
+      this._drawClass.drawBricks(this.ctx, this.defaults, this.bricks);
+      this._drawClass.drawBall(this.ctx, this.defaults, this.x, this.y);
+      this._drawClass.drawPaddle(
+        this.ctx,
+        this.state,
+        this.defaults,
+        this.canvas
+      );
       this._collisionDetection(this.x, this.y);
-      this._drawScore();
-      this._drawLives();
+      this._drawClass.drawScore(this.ctx, this.state, this.defaults);
+      this._drawClass.drawLives(
+        this.ctx,
+        this.state,
+        this.defaults,
+        this.canvas
+      );
 
       if (
         this.y + this.state.dy <
@@ -310,9 +235,9 @@ export class Breakout {
       } else if (
         this.y + this.state.dy >
         this.canvas.height -
-        (this.defaults.ballRadius ? this.defaults.ballRadius : 0) -
-        this.defaults.paddleHeight +
-        2
+          (this.defaults.ballRadius ? this.defaults.ballRadius : 0) -
+          this.defaults.paddleHeight +
+          2
       ) {
         if (
           this.x > this.state.paddleX &&
@@ -338,10 +263,10 @@ export class Breakout {
 
       if (
         this.x + this.state.dx <
-        (this.defaults.ballRadius ? this.defaults.ballRadius : 0) ||
+          (this.defaults.ballRadius ? this.defaults.ballRadius : 0) ||
         this.x + this.state.dx >
-        this.canvas.width -
-        (this.defaults.ballRadius ? this.defaults.ballRadius : 0)
+          this.canvas.width -
+            (this.defaults.ballRadius ? this.defaults.ballRadius : 0)
       ) {
         this.state.dx = -this.state.dx;
       }
