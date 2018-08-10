@@ -1,8 +1,7 @@
-
 import { IDefaults } from '../models/defaults.model';
 
 export class Handler {
-  constructor() { }
+  constructor() {}
 
   // moves paddle when key pressed
   keydownHandler(e: KeyboardEvent): string {
@@ -20,36 +19,25 @@ export class Handler {
       return 'rightPressed';
     } else if (e.keyCode === 37) {
       return 'leftPressed';
-    } return '';
+    }
+    return '';
   }
 
-  pauseGame(ctx: CanvasRenderingContext2D, canvas: any): void {
+  pauseGame(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
     ctx.beginPath();
-    ctx.font = "36px Arial";
-    ctx.fillStyle = "white";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      "PAUSED",
-      canvas.width / 2,
-      canvas.height / 2 - 20
-    );
+    ctx.font = '36px Arial';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2 - 20);
     ctx.fill();
   }
 
-  gameOver(ctx: CanvasRenderingContext2D, canvas: any, defaults: IDefaults): void {
+  gameOver(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, defaults: IDefaults): void {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = defaults.scoreLivesColor;
     ctx.font = '48px Arial';
-    ctx.textAlign = "center";
-    ctx.fillText(
-      "Game Over",
-      canvas.width / 2,
-      canvas.height / 2
-    );
-    ctx.fillText(
-      "Click Mouse to Restart",
-      canvas.width / 2,
-      canvas.height / 2 + 50
-    );
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+    ctx.fillText('Click Mouse to Restart', canvas.width / 2, canvas.height / 2 + 50);
   }
 }

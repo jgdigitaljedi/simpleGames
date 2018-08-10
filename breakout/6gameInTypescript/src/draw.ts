@@ -1,5 +1,6 @@
 import { IDefaults } from "../models/defaults.model";
 import { IState } from "../models/state.model";
+import { IBrick } from "../models/bricks.model";
 
 export class Draw {
   constructor() {}
@@ -21,7 +22,7 @@ export class Draw {
     ctx: CanvasRenderingContext2D,
     state: IState,
     defaults: IDefaults,
-    canvas: any
+    canvas: HTMLCanvasElement
   ): void {
     ctx.beginPath();
     ctx.font = "16px Arial";
@@ -48,7 +49,12 @@ export class Draw {
     ctx.closePath();
   }
 
-  drawBall(ctx: CanvasRenderingContext2D, defaults: IDefaults, x, y): void {
+  drawBall(
+    ctx: CanvasRenderingContext2D,
+    defaults: IDefaults,
+    x: number,
+    y: number
+  ): void {
     ctx.beginPath();
     ctx.arc(
       x,
@@ -66,7 +72,7 @@ export class Draw {
     ctx: CanvasRenderingContext2D,
     state: IState,
     defaults: IDefaults,
-    canvas: any
+    canvas: HTMLCanvasElement
   ) {
     ctx.beginPath();
     ctx.rect(
@@ -80,7 +86,11 @@ export class Draw {
     ctx.closePath();
   }
 
-  drawBricks(ctx: CanvasRenderingContext2D, defaults: IDefaults, bricks) {
+  drawBricks(
+    ctx: CanvasRenderingContext2D,
+    defaults: IDefaults,
+    bricks: IBrick[][]
+  ) {
     for (var c = 0; c < defaults.brickColumnCount; c++) {
       for (var r = 0; r < defaults.brickRowCount; r++) {
         if (bricks[c][r].show) {

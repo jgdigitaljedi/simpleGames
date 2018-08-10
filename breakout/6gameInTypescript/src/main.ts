@@ -1,26 +1,27 @@
-import { Defaults } from "./defaults";
-import { Handler } from "./handler";
-import { IDefaults } from "../models/defaults.model";
-import { IState } from "../models/state.model";
-import { Stages } from "./stages";
-import { Powerups } from "./powerups";
-import { Draw } from "./draw";
+import { Defaults } from './defaults';
+import { Handler } from './handler';
+import { IDefaults } from '../models/defaults.model';
+import { IState } from '../models/state.model';
+import { Stages } from './stages';
+import { Powerups } from './powerups';
+import { Draw } from './draw';
+import { IBrick } from '../models/bricks.model';
 
 /*********** BUGS *************
  * - ball doesn't reset position when changing stages
  * - ball changes direction sometimes when powerup collected
  */
 export class Breakout {
-  canvas: any = document.getElementById("breakout");
+  canvas: HTMLCanvasElement = document.getElementById('breakout');
   ctx: CanvasRenderingContext2D;
   defaults: IDefaults;
   state: IState;
   x: number;
   y: number;
-  bricks: any;
+  bricks: IBrick[][];
   powerups: any[];
   stages: any;
-  gameInterval: any;
+  gameInterval: number;
   private _handler: Handler;
   private _stages: Stages;
   private _powerups: Powerups;
@@ -29,22 +30,22 @@ export class Breakout {
     this.initializeGame();
   }
 
-  initializeGame() {
+  initializeGame(): void {
     this._handler = new Handler();
     this._stages = new Stages();
     this._powerups = new Powerups();
     this._drawClass = new Draw();
     this._initVariables();
-    document.addEventListener("keydown", this.keydown.bind(this));
-    document.addEventListener("keyup", this.keyupHandler.bind(this));
-    document.addEventListener("mousemove", this.mouseMoveHandler.bind(this));
-    document.addEventListener("mouseup", this.mouseClickHandler.bind(this));
+    document.addEventListener('keydown', this.keydown.bind(this));
+    document.addEventListener('keyup', this.keyupHandler.bind(this));
+    document.addEventListener('mousemove', this.mouseMoveHandler.bind(this));
+    document.addEventListener('mouseup', this.mouseClickHandler.bind(this));
   }
 
   // moves paddle when key pressed
   keydown(e: KeyboardEvent): void {
     const which: string = this._handler.keydownHandler(e);
-    if (which && which !== "") {
+    if (which && which !== '') {
       this.state[which] = true;
     }
   }
@@ -52,7 +53,7 @@ export class Breakout {
   // resets key pressed state to stop paddle movement on keyup
   keyupHandler(e: KeyboardEvent): void {
     const which: string = this._handler.keyupHandler(e);
-    if (which && which !== "") {
+    if (which && which !== '') {
       this.state[which] = false;
     }
   }
@@ -87,11 +88,8 @@ export class Breakout {
     const pLen = this.powerups.length;
     const randPu = Math.floor(Math.random() * pLen);
     this.state.powerUpFalling = this.powerups[randPu];
-    this.state.px = Math.floor(
-      Math.random() * (this.canvas.width - this.defaults.powerUpRadius)
-    );
-    if (this.state.px < this.defaults.powerUpRadius)
-      this.state.px = this.defaults.powerUpRadius;
+    this.state.px = Math.floor(Math.random() * (this.canvas.width - this.defaults.powerUpRadius));
+    if (this.state.px < this.defaults.powerUpRadius) this.state.px = this.defaults.powerUpRadius;
   }
 
   private _powerUpActivate() {
@@ -139,15 +137,13 @@ export class Breakout {
             x + this.defaults.ballRadius >= b.x &&
             x - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) <=
               b.x + this.defaults.brickWidth &&
-            y >=
-              b.y - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) &&
+            y >= b.y - (this.defaults.ballRadius ? this.defaults.ballRadius : 0) &&
             y <= b.y + this.defaults.brickHeight + this.defaults.ballRadius
           ) {
             if (!this.state.powerUpFalling) {
               this.state.powerUpCounter++;
             }
-            if (this.state.powerUpCounter >= this.defaults.powerUpActivateCount)
-              this._powerUp();
+            if (this.state.powerUpCounter >= this.defaults.powerUpActivateCount) this._powerUp();
             if (y < b.y + this.defaults.brickHeight + 2) {
               // if collision occurs on side of brick
               this.state.dx = -this.state.dx;
@@ -168,16 +164,16 @@ export class Breakout {
                 this.state.stage = 1;
               }
               this.ctx.beginPath();
-              this.ctx.fillStyle = "white";
-              this.ctx.textAlign = "center";
+              this.ctx.fillStyle = 'white';
+              this.ctx.textAlign = 'center';
               // this.ctx.fontStyle = '36px Arial';
               this.ctx.fillText(
-                "Click to go to next stage",
+                'Click to go to next stage',
                 this.canvas.width / 2,
                 this.canvas.height / 2 - 20
               );
               this.ctx.fill();
-              this.bricks = this.stages["stage" + this.state.stage]();
+              this.bricks = this.stages['stage' + this.state.stage]();
               x = this.canvas.width / 2;
               y = this.canvas.height - 30;
               this.state.dx = this.defaults.dx;
@@ -191,9 +187,7 @@ export class Breakout {
 
   private _handlePaddleHit() {
     // what percentage of x axis did ball hit paddle
-    var deltaX = Math.abs(
-      (this.x - this.state.paddleX) / this.state.paddleWidth
-    );
+    var deltaX = Math.abs((this.x - this.state.paddleX) / this.state.paddleWidth);
     // if ball hit paddle off center then slightly change ball movement direction accordingly
     if (deltaX > 0.55) {
       this.state.dx += deltaX * 1.2;
@@ -212,25 +206,12 @@ export class Breakout {
       }
       this._drawClass.drawBricks(this.ctx, this.defaults, this.bricks);
       this._drawClass.drawBall(this.ctx, this.defaults, this.x, this.y);
-      this._drawClass.drawPaddle(
-        this.ctx,
-        this.state,
-        this.defaults,
-        this.canvas
-      );
+      this._drawClass.drawPaddle(this.ctx, this.state, this.defaults, this.canvas);
       this._collisionDetection(this.x, this.y);
       this._drawClass.drawScore(this.ctx, this.state, this.defaults);
-      this._drawClass.drawLives(
-        this.ctx,
-        this.state,
-        this.defaults,
-        this.canvas
-      );
+      this._drawClass.drawLives(this.ctx, this.state, this.defaults, this.canvas);
 
-      if (
-        this.y + this.state.dy <
-        (this.defaults.ballRadius ? this.defaults.ballRadius : 0)
-      ) {
+      if (this.y + this.state.dy < (this.defaults.ballRadius ? this.defaults.ballRadius : 0)) {
         this.state.dy = -this.state.dy;
       } else if (
         this.y + this.state.dy >
@@ -239,10 +220,7 @@ export class Breakout {
           this.defaults.paddleHeight +
           2
       ) {
-        if (
-          this.x > this.state.paddleX &&
-          this.x < this.state.paddleX + this.state.paddleWidth
-        ) {
+        if (this.x > this.state.paddleX && this.x < this.state.paddleX + this.state.paddleWidth) {
           this._handlePaddleHit();
         } else {
           this.state.lives--;
@@ -255,18 +233,15 @@ export class Breakout {
             this.y = this.canvas.height - 30;
             this.state.dx = this.defaults.dx;
             this.state.dy = this.defaults.dy;
-            this.state.paddleX =
-              (this.canvas.width - this.state.paddleWidth) / 2;
+            this.state.paddleX = (this.canvas.width - this.state.paddleWidth) / 2;
           }
         }
       }
 
       if (
-        this.x + this.state.dx <
-          (this.defaults.ballRadius ? this.defaults.ballRadius : 0) ||
+        this.x + this.state.dx < (this.defaults.ballRadius ? this.defaults.ballRadius : 0) ||
         this.x + this.state.dx >
-          this.canvas.width -
-            (this.defaults.ballRadius ? this.defaults.ballRadius : 0)
+          this.canvas.width - (this.defaults.ballRadius ? this.defaults.ballRadius : 0)
       ) {
         this.state.dx = -this.state.dx;
       }
@@ -301,9 +276,7 @@ export class Breakout {
       leftPressed: false,
       paddleX:
         (this.canvas.width -
-          (typeof this.defaults.paddleWidth === "number"
-            ? this.defaults.paddleWidth
-            : 0)) /
+          (typeof this.defaults.paddleWidth === 'number' ? this.defaults.paddleWidth : 0)) /
         2,
       dx: this.defaults.dx,
       dy: this.defaults.dy,
@@ -334,14 +307,14 @@ export class Breakout {
   }
 
   private _initVariables() {
-    this.ctx = this.canvas.getContext("2d");
+    this.ctx = this.canvas.getContext('2d');
     this._initDefaults();
     this._initState();
     this.powerups = this._powerups.getPowerUps(this.state, this.defaults);
     this.stages = this._stages.getStages(this.defaults);
     this._initBallPosition();
 
-    this.bricks = this.stages["stage" + this.state.stage]();
+    this.bricks = this.stages['stage' + this.state.stage]();
     setTimeout(() => {
       this.gameInterval = setInterval(() => {
         this._draw();
