@@ -58,7 +58,7 @@ export class Breakout {
     }
   }
 
-  mouseMoveHandler(e) {
+  mouseMoveHandler(e: MouseEvent) {
     var relativeX = e.clientX - this.canvas.offsetLeft;
     if (
       relativeX > this.state.paddleWidth / 2 &&
@@ -68,7 +68,7 @@ export class Breakout {
     }
   }
 
-  mouseClickHandler(e) {
+  mouseClickHandler(e: MouseEvent) {
     if (this.state.gameOver) {
       this._resetGame();
       this.state.gameOver = false;
@@ -128,7 +128,7 @@ export class Breakout {
     this.state.gameOver = true;
   }
 
-  private _collisionDetection(x, y) {
+  private _collisionDetection(x: number, y: number) {
     for (let c = 0; c < this.defaults.brickColumnCount; c++) {
       for (let r = 0; r < this.defaults.brickRowCount; r++) {
         let b = this.bricks[c][r];
